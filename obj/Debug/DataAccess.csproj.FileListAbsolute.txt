@@ -1,0 +1,20 @@
+C:\Thomasc\Polaris2\SourceCode\DataAccess\bin\Debug\DataAccess.dll
+C:\Thomasc\Polaris2\SourceCode\DataAccess\bin\Debug\DataAccess.pdb
+C:\Thomasc\Polaris2\SourceCode\DataAccess\obj\Debug\ResolveAssemblyReference.cache
+C:\Thomasc\Polaris2\SourceCode\DataAccess\obj\Debug\DataAccess.dll
+C:\Thomasc\Polaris2\SourceCode\DataAccess\obj\Debug\DataAccess.pdb
+C:\Thomasc\Polaris\SourceCode\DataAccess\bin\Debug\DataAccess.dll
+C:\Thomasc\Polaris\SourceCode\DataAccess\bin\Debug\DataAccess.pdb
+C:\Thomasc\Polaris\SourceCode\DataAccess\obj\Debug\ResolveAssemblyReference.cache
+C:\Thomasc\Polaris\SourceCode\DataAccess\obj\Debug\DataAccess.dll
+C:\Thomasc\Polaris\SourceCode\DataAccess\obj\Debug\DataAccess.pdb
+C:\Thomasc\DataAccessDemo\DataAccess\bin\Debug\DataAccess.dll
+C:\Thomasc\DataAccessDemo\DataAccess\bin\Debug\DataAccess.pdb
+C:\Thomasc\DataAccessDemo\DataAccess\obj\Debug\ResolveAssemblyReference.cache
+C:\Thomasc\DataAccessDemo\DataAccess\obj\Debug\DataAccess.dll
+C:\Thomasc\DataAccessDemo\DataAccess\obj\Debug\DataAccess.pdb
+C:\Users\thomasc\Desktop\DataAccessDemo 3-2-12\DataAccessDemo\DataAccess\bin\Debug\DataAccess.dll
+C:\Users\thomasc\Desktop\DataAccessDemo 3-2-12\DataAccessDemo\DataAccess\bin\Debug\DataAccess.pdb
+C:\Users\thomasc\Desktop\DataAccessDemo 3-2-12\DataAccessDemo\DataAccess\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\thomasc\Desktop\DataAccessDemo 3-2-12\DataAccessDemo\DataAccess\obj\Debug\DataAccess.dll
+C:\Users\thomasc\Desktop\DataAccessDemo 3-2-12\DataAccessDemo\DataAccess\obj\Debug\DataAccess.pdb
