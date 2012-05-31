@@ -148,7 +148,7 @@ namespace DataAccess
         /// </example>
         public IEnumerable<T> ExecuteModel<T>(Type metadata = null) where T : new()
         {
-            return sqlAccess.ExecuteCommand<IEnumerable<T>>(command.Connection, () => sqlAccess.QueryModel<T>(command, metadata));
+            return sqlAccess.ExecuteCommand<IEnumerable<T>>(command.Connection, () => sqlAccess.QueryModel<T>(command, metadata: metadata));
         }
 
         /// <summary>
