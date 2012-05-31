@@ -90,9 +90,9 @@ namespace DataAccess
         /// (skip the properties marked by NotAnInParameter)
         /// </summary>
         /// <param name="parameters">The model</param>
-        /// <param name="paraList">The public properties that are the parameters of the command. 
+        /// <param name="include">The public properties that are the parameters of the command. 
         /// if null - all the public properties are parameters, except the properties maked by NotAnInParameter</param>
-        /// <param name="exceptions">The public properties that are NOT the parameters of the command.
+        /// <param name="exclude">The public properties that are NOT the parameters of the command.
         /// if null - there is no exception</param>
         /// <param name="metadata">The metadata</param>
         /// <example>
@@ -105,9 +105,9 @@ namespace DataAccess
         /// db.ExecuteNonQuery();
         /// </code>
         /// </example>
-        public void AddInParametersByModel(object parameters, string[] paraList = null, string[] exceptions = null, Type metadata = null)
+        public void AddInParametersByModel(object parameters, string[] include = null, string[] exclude = null, Type metadata = null)
         {
-            sqlAccess.AddInParametersByModel(command, parameters, paraList, exceptions, metadata);
+            sqlAccess.AddInParametersByModel(command, parameters, include, exclude, metadata);
         }
 
         #endregion
