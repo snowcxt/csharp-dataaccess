@@ -74,29 +74,57 @@ namespace DataAccess
             return GetWhereClause(idList);
         }
 
+        private string ComposeSelectClause(string tableName, Type modelType, string[] include = null, string[] exclude = null, Type metadata = null)
+        {
+            if (exclude == null)
+            {
+                if (include == null)
+                    return string.Format("SELECT * FROM {0}", tableName);
+                else
+                    return string.Format("SELECT {1} FROM {0}", tableName, string.Join(", ", include.Select(t => "[" + t + "]").ToArray()));
+            }
+            else
+            {
+                List<string> fields = new List<string>();
+                var mdList = GetMetaData(modelType, ConvertDirections.ResultToModel, metadata);
+                foreach (var md in mdList)
+                {
+                    if ((include == null || include.Contains(md.Name)) && (!exclude.Contains(md.Name)))
+                    {
+                        fields.Add("[" + md.Name + "]");
+                    }
+                }
+
+                return string.Format("SELECT {1} FROM {0}", tableName, string.Join(", ", fields.ToArray()));
+            }
+        }
+
         /// <summary>
         /// Gets a model from a sql table based on the whereClause
         /// </summary>
         /// <typeparam name="T">Model's type</typeparam>
         /// <param name="tableName">Name of the table.</param>
         /// <param name="whereClause">The where clause.</param>
+        /// <param name="include">The include.</param>
+        /// <param name="exclude">The exclude.</param>
+        /// <param name="metadata">The extra metadata.</param>
         /// <returns></returns>
         /// <example>
-        /// <code>
+        ///   <code>
         /// //get a product model from Product table where ID = 1
         /// ProductModel product = new SqlAccess().GetModel&lt;ProductModel&gt;("Product", new { ID = 1 });
-        /// </code>
-        /// </example>
-        public T GetMode<T>(string tableName, object whereClause) where T : new()
+        ///   </code>
+        ///   </example>
+        public T GetMode<T>(string tableName, object whereClause, string[] include = null, string[] exclude = null, Type metadata = null) where T : new()
         {
             SqlCommand command = new SqlCommand();
             command.Connection = new SqlConnection(defaultConnectionString);
 
-            command.CommandText = string.Format("SELECT * FROM {0}{1}",
-                   tableName,
+            command.CommandText = string.Format("{0}{1}",
+                   ComposeSelectClause(tableName, typeof(T), include, exclude, metadata),
                    ComposeWhereClauseForSelectDelete(command, whereClause));
 
-            return ExecuteCommand<T>(command.Connection, () => QueryModel<T>(command).FirstOrDefault());
+            return ExecuteCommand<T>(command.Connection, () => QueryModel<T>(command, metadata: metadata).FirstOrDefault());
         }
 
         /// <summary>
@@ -104,11 +132,14 @@ namespace DataAccess
         /// </summary>
         /// <typeparam name="T">Model's type.</typeparam>
         /// <param name="tableName">Table's name.</param>
+        /// <param name="include">The include.</param>
+        /// <param name="exclude">The exclude.</param>
+        /// <param name="metadata">The extra metadata.</param>
         /// <returns></returns>
-        public IEnumerable<T> GetModelList<T>(string tableName) where T : new()
+        public IEnumerable<T> GetModelList<T>(string tableName, string[] include = null, string[] exclude = null, Type metadata = null) where T : new()
         {
-            SqlCommand command = CreateCommand(string.Format("SELECT * FROM {0}", tableName), CommandType.Text);
-            return ExecuteCommand<IEnumerable<T>>(command.Connection, () => QueryModel<T>(command));
+            SqlCommand command = CreateCommand(ComposeSelectClause(tableName, typeof(T), include, exclude, metadata), CommandType.Text);
+            return ExecuteCommand<IEnumerable<T>>(command.Connection, () => QueryModel<T>(command, metadata: metadata));
         }
 
         /// <summary>
@@ -118,10 +149,10 @@ namespace DataAccess
         /// <param name="command">The command.</param>
         /// <param name="model">The model.</param>
         /// <param name="tableName">Name of the table.</param>
-        /// <param name="propList">The property list.</param>
-        /// <param name="exceptions">The exceptions.</param>
-        /// <param name="metadata">The metadata.</param>
-        public void ComposeInsertCommand(SqlCommand command, object model, string tableName, string[] propList = null, string[] exceptions = null, Type metadata = null)
+        /// <param name="include">The property list.</param>
+        /// <param name="exclude">The exceptions.</param>
+        /// <param name="metadata">The extra metadata.</param>
+        public void ComposeInsertCommand(SqlCommand command, object model, string tableName, string[] include = null, string[] exclude = null, Type metadata = null)
         {
             command.CommandType = CommandType.Text;
             command.Parameters.Clear();
@@ -131,7 +162,7 @@ namespace DataAccess
                 List<string> para = new List<string>();
                 GetFromModel(model, (name, val, isPrimaryKey) =>
                 {
-                    if ((propList == null || propList.Contains(name)) && (exceptions == null || !exceptions.Contains(name)))
+                    if ((include == null || include.Contains(name)) && (exclude == null || !exclude.Contains(name)))
                     {
                         AddInParameter(command, name, val);
                         fields.Add("[" + name + "]");
@@ -153,20 +184,20 @@ namespace DataAccess
         /// <typeparam name="T">Model's type</typeparam>
         /// <param name="model">The model.</param>
         /// <param name="tableName">Name of the table.</param>
-        /// <param name="propList">The properties that are inserted into table.</param>
-        /// <param name="exceptions">The properties that are NOT inserted into table.</param>
+        /// <param name="include">The properties that are inserted into table.</param>
+        /// <param name="exclude">The properties that are NOT inserted into table.</param>
         /// <param name="metadata">The metadata</param>
         /// <example>
         /// <code>
         /// //insert a product model into Product table, except "ModifiedBy" and "Modified" properties
-        /// new SqlAccess().InsertModel&lt;ProductModel&gt;(model, "Product", exceptions: new string[] { "ModifiedBy", "Modified" });
+        /// new SqlAccess().InsertModel&lt;ProductModel&gt;(model, "Product", exclude: new string[] { "ModifiedBy", "Modified" });
         /// </code>
         /// </example>
-        public void InsertModel(object model, string tableName, string[] propList = null, string[] exceptions = null, Type metadata = null)
+        public void InsertModel(object model, string tableName, string[] include = null, string[] exclude = null, Type metadata = null)
         {
             SqlCommand command = new SqlCommand();
             command.Connection = new SqlConnection(defaultConnectionString);
-            ComposeInsertCommand(command, model, tableName, propList, exceptions, metadata);
+            ComposeInsertCommand(command, model, tableName, include, exclude, metadata);
             ExecuteCommand<int>(command.Connection, () => command.ExecuteNonQuery());
         }
 
@@ -177,12 +208,12 @@ namespace DataAccess
         /// <param name="command">The command.</param>
         /// <param name="model">The model.</param>
         /// <param name="tableName">Name of the table.</param>
-        /// <param name="propList">The property list.</param>
-        /// <param name="exceptions">The exceptions.</param>
+        /// <param name="include">The property list.</param>
+        /// <param name="exclude">The exceptions.</param>
         /// <param name="skipNull">if set to <c>true</c>, the function will skip the null value.</param>
         /// <param name="primaryKeys">The primary keys.</param>
         /// <param name="metadata">The metadata</param>
-        public void ComposeUpdateCommand(SqlCommand command, object model, string tableName, string[] propList = null, string[] exceptions = null, bool skipNull = true, string[] primaryKeys = null, Type metadata = null)
+        public void ComposeUpdateCommand(SqlCommand command, object model, string tableName, string[] include = null, string[] exclude = null, bool skipNull = true, string[] primaryKeys = null, Type metadata = null)
         {
             command.CommandType = CommandType.Text;
             command.Parameters.Clear();
@@ -193,7 +224,7 @@ namespace DataAccess
 
                 GetFromModel(model, (name, val, isPrimaryKey) =>
                 {
-                    if ((propList == null || propList.Contains(name)) && (exceptions == null || !exceptions.Contains(name)))
+                    if ((include == null || include.Contains(name)) && (exclude == null || !exclude.Contains(name)))
                     {
                         if ((primaryKeys == null && isPrimaryKey) || (primaryKeys != null && primaryKeys.Contains(name)))
                         {
@@ -226,22 +257,22 @@ namespace DataAccess
         /// <typeparam name="T">Model's type</typeparam>
         /// <param name="model">The model.</param>
         /// <param name="tableName">Name of the table.</param>
-        /// <param name="propList">The properties that are updated.</param>
-        /// <param name="exceptions">The properties that are NOT updated.</param>
+        /// <param name="include">The properties that are updated.</param>
+        /// <param name="exclude">The properties that are NOT updated.</param>
         /// <param name="skipNull">if set to <c>true</c>, the function will skip the null value.</param>
         /// <param name="primaryKeys">The primary keys.</param>
         /// <param name="metadata">The metadata</param>
         /// <example>
         /// <code>
         /// //update the product model into Product table, except "CreatedBy", "Created" properties
-        /// new SqlAccess().UpdateModel&lt;ProductModel&gt;(model, "Product", exceptions: new string[] { "CreatedBy", "Created" });
+        /// new SqlAccess().UpdateModel&lt;ProductModel&gt;(model, "Product", exclude: new string[] { "CreatedBy", "Created" });
         /// </code>
         /// </example>
-        public void UpdateModel(object model, string tableName, string[] propList = null, string[] exceptions = null, bool skipNull = true, string[] primaryKeys = null, Type metadata = null)
+        public void UpdateModel(object model, string tableName, string[] include = null, string[] exclude = null, bool skipNull = true, string[] primaryKeys = null, Type metadata = null)
         {
             SqlCommand command = new SqlCommand();
             command.Connection = new SqlConnection(defaultConnectionString);
-            ComposeUpdateCommand(command, model, tableName, propList, exceptions, skipNull, primaryKeys, metadata);
+            ComposeUpdateCommand(command, model, tableName, include, exclude, skipNull, primaryKeys, metadata);
             ExecuteCommand<int>(command.Connection, () => command.ExecuteNonQuery());
         }
 
@@ -363,7 +394,7 @@ namespace DataAccess
         /// <param name="command">The command.</param>
         /// <param name="metadata">The extra metadata.</param>
         /// <returns>Strong typed list.</returns>
-        public IEnumerable<T> QueryModel<T>(DbCommand command, Type metadata = null) where T : new()
+        public IEnumerable<T> QueryModel<T>(DbCommand command, string[] include = null, string[] exclude = null, Type metadata = null) where T : new()
         {
             List<T> resultList = new List<T>();
             DbDataReader reader = command.ExecuteReader();
@@ -376,7 +407,13 @@ namespace DataAccess
             {
                 resultList.Add(SetToModel<T, IDataReader>(
                     reader, metaData,
-                    (col, data) => schemaTable.Select("ColumnName='" + col + "'").Count() > 0 ? data[col] : default(T)));
+                    (col, data) =>
+                    {
+                        if ((include == null || include.Contains(col)) && (exclude == null || !exclude.Contains(col)))
+                            return schemaTable.Select("ColumnName='" + col + "'").Count() > 0 ? data[col] : null;
+                        else
+                            return null;
+                    }));
             }
 
             reader.Close();
