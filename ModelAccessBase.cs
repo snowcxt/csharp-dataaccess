@@ -60,12 +60,12 @@ namespace DataAccess
         {
             string name = ConvertName(info, direction);
             return new DataAccessMetadataInfo()
-                    {
-                        Info = info,
-                        Name = name ?? info.Name,
-                        ConvertValueAttr = GetConvertAttr(info, direction),
-                        IsPrimaryKey = info.GetCustomAttributes(typeof(PrimaryKeyAttribute), false).Length > 0
-                    };
+            {
+                Info = info,
+                Name = name ?? info.Name,
+                ConvertValueAttr = GetConvertAttr(info, direction),
+                IsPrimaryKey = info.GetCustomAttributes(typeof(PrimaryKeyAttribute), false).Length > 0
+            };
         }
 
         protected IEnumerable<DataAccessMetadataInfo> GetMetaData(Type modelType, ConvertDirections direction, Type extraMetadata = null)
@@ -100,10 +100,11 @@ namespace DataAccess
             foreach (DataAccessMetadataInfo ma in metaData)
             {
                 object val = mappingMethod(ma.Name, dataRow);
+                if (ma.ConvertValueAttr != null)
+                    val = ma.ConvertValueFunc.Invoke(ma.ConvertValueAttr, new object[] { val });
+
                 if (val != null && !(val is DBNull))
                 {
-                    if (ma.ConvertValueAttr != null)
-                        val = ma.ConvertValueFunc.Invoke(ma.ConvertValueAttr, new object[] { val });
                     ma.Info.SetValue(result, val, null);
                 }
             }
@@ -187,11 +188,6 @@ namespace DataAccess
         private ValueConvertAttribute GetConvertAttr(PropertyInfo info, ConvertDirections dir)
         {
             return (ValueConvertAttribute)info.GetCustomAttributes(typeof(ValueConvertAttribute), true).FirstOrDefault(t => ((ValueConvertAttribute)t).ConvertDirection == dir);
-        }
-
-        private MethodInfo GetConvertFunc(ValueConvertAttribute convertAttr)
-        {
-            return convertAttr.GetType().GetMethod("Convert");
         }
     }
 }
